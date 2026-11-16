@@ -22,8 +22,6 @@ jobs:
         if: always()
         run: |
           cd target/surefire-reports
-          f=$(ls TEST-*.xml | head -1)
-          echo "::notice::files=$(ls TEST-*.xml | wc -l) first=$f bytes=$(wc -c < $f) maxline=$(awk '{ if (length($0) > m) m = length($0) } END { print m }' $f) props=$(grep -c '<property ' $f)"
-          echo "::notice::head=$(head -c 400 $f | tr '\n"<>' ' ._.' )"
-          echo "::notice::propnames=$(grep -o '<property name="[^"]*"' $f | sed 's/<property name=//' | tr -d '"' | tr '\n' ' ' | cut -c1-900)"
-          echo "::notice::owner=$(stat -c '%U:%G %a' $f) dir=$(stat -c '%U:%G %a' .) me=$(id -un) pwd=$(pwd | sed 's/[^/]//g' | wc -c) link=$(test -L ../../target && echo yes || echo no)"
+          echo "::notice::entities=$(cat TEST-*.xml | grep -o '&#[0-9a-zA-Z]*;' | sort | uniq -c | tr '\n' ' ' | tr '&' '@')"
+          echo "::notice::nonascii=$(cat TEST-*.xml | LC_ALL=C grep -c '[^ -~]' ) ctrl=$(cat TEST-*.xml | LC_ALL=C grep -c '[[:cntrl:]]') total_bytes=$(cat TEST-*.xml | wc -c) biggest=$(ls -S TEST-*.xml | head -1) $(ls -S TEST-*.xml | head -1 | xargs wc -c | cut -d' ' -f1)"
+          echo "::notice::other=$(ls | grep -v '^TEST-.*xml$' | grep -v 'txt$' | head -5 | tr '\n' ' ') mtime=$(stat -c '%y' $(ls TEST-*.xml | head -1)) now=$(date -u +%FT%T)"
