@@ -18,12 +18,12 @@ jobs:
           java-version: '21'
       - name: Run Maven tests
         run: mvn -B -ntp test -Drat.skip=true -Dcheckstyle.skip=true -Dspotbugs.skip=true -Dpmd.skip=true -Danimal.sniffer.skip=true -Djapicmp.skip=true
-      - name: List report files
+      - name: Describe report files
         if: always()
         run: |
-          pwd
-          find . -name '*.xml' -newer pom.xml -not -path './.git/*' -not -path './src/*' | sort | sed -n 1,80p
-          find . -name 'TEST-*.xml' | wc -l
-          grep -c '<testcase' target/surefire-reports/TEST-*.xml | awk -F: '{s+=$2} END {print "testcases", s}'
-          grep -l 'rerunFailure\|flakyFailure\|<testsuites' target/surefire-reports/*.xml || true
-          ls -la target/surefire-reports | sed -n 1,12p
+          cd target/surefire-reports
+          f=$(ls TEST-*.xml | head -1)
+          echo "::notice::files=$(ls TEST-*.xml | wc -l) first=$f bytes=$(wc -c < $f) maxline=$(awk '{ if (length($0) > m) m = length($0) } END { print m }' $f) props=$(grep -c '<property ' $f)"
+          echo "::notice::head=$(head -c 400 $f | tr '\n"<>' ' ._.' )"
+          echo "::notice::propnames=$(grep -o '<property name="[^"]*"' $f | sed 's/<property name=//' | tr -d '"' | tr '\n' ' ' | cut -c1-900)"
+          echo "::notice::owner=$(stat -c '%U:%G %a' $f) dir=$(stat -c '%U:%G %a' .) me=$(id -un) pwd=$(pwd | sed 's/[^/]//g' | wc -c) link=$(test -L ../../target && echo yes || echo no)"
